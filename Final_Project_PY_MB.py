@@ -42,7 +42,7 @@ class EcommerceClass(object):
                     print("product_name OR price can not be empty")
                 elif not prod_name == "" and not prod_price == "":
                     if prod_price < 0:
-                        print("product price can not be less than zero.")
+                        print("product price can not be less than zero")
                     else:
                         connection = create_connection(r"final_project_database.db")
                         cursor = connection.cursor()
