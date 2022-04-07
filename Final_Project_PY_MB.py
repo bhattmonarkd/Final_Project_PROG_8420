@@ -33,6 +33,9 @@ class EcommerceClass(object):
     def __init__(self):
         self.login_count = 1
 
+    def create_customer(self):
+        print()
+
     def create_product(self):
         try:
             prod_name = input("Enter product name:")
