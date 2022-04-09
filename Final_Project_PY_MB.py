@@ -8,8 +8,11 @@ import sqlite3
 from datetime import datetime
 from sqlite3 import Error
 import csv
-#import pandas as pd
-#import plotly.express as px
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+# import plotly.express as px
 
 
 def cipher_conv(password):
@@ -32,24 +35,21 @@ def cipher_conv(password):
 def create_connection(db_file):
     conn = None
     try:
-        conn = sqlite3.connect(db_file,timeout=10)
-        #print(sqlite3.version)
+        conn = sqlite3.connect(db_file, timeout=3)
+        # print(sqlite3.version)
     except Error as er:
         print(er)
     finally:
         if conn:
-            return conn
             conn.close()
+            return conn
 
 
 if __name__ == '__main__':
     create_connection(r"final_project_database.db")
 
 
-
 class EcommerceClass(object):
-    #connection = create_connection(r"final_project_database.db")
-    #cursor = connection.cursor()
 
     def __init__(self):
         self.login_count = 1
@@ -57,14 +57,11 @@ class EcommerceClass(object):
     def custlogin(self):
         try:
             conn = create_connection(r"final_project_database.db")
-
+            cur = conn.cursor()
             try:
-                cur = conn.cursor()
-
-                que = '''CREATE TABLE "customers" (cid INTEGER NOT NULL UNIQUE, cust_name TEXT NOT NULL,
+                create_cust_query = '''CREATE TABLE "customers" (cid INTEGER NOT NULL UNIQUE, cust_name TEXT NOT NULL,
                         cust_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cid AUTOINCREMENT));'''
-                conn.execute(que)
-                print("Table created ")
+                conn.execute(create_cust_query)
                 # commit to save query result
                 conn.commit()
             except Exception as e:
@@ -75,8 +72,6 @@ class EcommerceClass(object):
             user_name = input("User Name:- ")
             pw = input("Password:-  ")
             encrypted_password = cipher_conv(pw)
-            print("after pw")
-            print("Cipher password is ", encrypted_password)
             try:
                 # .format let us insert and do data formatting in the query
                 # Since the USER_ID is unique, there will be only one USER_ID assigned to each user
@@ -94,7 +89,6 @@ class EcommerceClass(object):
 
                     # let's display the access_count column
                     cur.execute('select access_count from  customers where cid ={};'.format(cid))
-                    print("find")
                     access_count = cur.fetchone()
                     if access_count:
                         access_count = access_count[0]
@@ -111,49 +105,44 @@ class EcommerceClass(object):
                 # If User is new user then create user and register
                 else:
                     # query to insert new USER
-                    print("new customer: ")
+                    print("You are a new customer: ")
                     cust_phone = input("Please enter phone number")
                     cur.execute(
-                        "INSERT INTO customers (cust_name,cust_phone, cryptographic_password) VALUES('{}','{}','{}');".format(user_name, cust_phone,
-                                                                                                       encrypted_password))
+                        "INSERT INTO customers (cust_name,cust_phone, cryptographic_password) VALUES('{}','{}','{}');".format(
+                            user_name, cust_phone,
+                            encrypted_password))
                     # commit to save the changes occurred in the table
-                    print("inserted")
+                    print("New Customer created successfully.")
                     conn.commit()
-                    print("new user")
 
                 # Exporting table customers into CSV file by fetching all the results we get from query
                 # make sure you have set the csv path
                 # cur.execute('SELECT * FROM customers;')
                 # customers_csv = cur.fetchall()
                 # if customers_csv:
-                    #     with open(csv_path, 'w') as file:
-                    #     writer = csv.writer(file)
-                        # select columns names to write rows in that sequence
-                    #     writer.writerow(['USER_ID', 'LOGIN', 'PASSWORD', 'access_count'])
-                        # writer.writerows(customers_csv)
-
-            except Exception as e:
-                # remove curser
+                #     with open(csv_path, 'w') as file:
+                #     writer = csv.writer(file)
+                # select columns names to write rows in that sequence
+                #     writer.writerow(['USER_ID', 'LOGIN', 'PASSWORD', 'access_count'])
+                # writer.writerows(customers_csv)
                 cur.close()
-            cur.close()
+                conn.close()
+            except Exception as e:
+                print(e)
         except Exception as e:
-            # close the connection
-            conn.close()
+            print(e)
 
     def stafflogin(self):
         try:
             conn = create_connection(r"final_project_database.db")
-
+            cur = conn.cursor()
             try:
-                cur = conn.cursor()
-
                 que = '''CREATE TABLE "StaffMember" (smid INTEGER NOT NULL UNIQUE, staffm_name TEXT NOT NULL,
                         staffm_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(smid AUTOINCREMENT));'''
                 conn.execute(que)
-                print("Table created ")
                 # commit to save query result
                 cur.execute("COMMIT;")
-                #conn.commit()
+                # conn.commit()
             except Exception as e:
                 print("The", e)
                 pass
@@ -162,8 +151,6 @@ class EcommerceClass(object):
             user_name = input("Staff Member Name:- ")
             pw = input("Password:-  ")
             encrypted_password = cipher_conv(pw)
-            print("after pw")
-            print("Cipher password is ", encrypted_password)
             try:
                 # .format let us insert and do data formatting in the query
                 # Since the USER_ID is unique, there will be only one USER_ID assigned to each user
@@ -185,7 +172,7 @@ class EcommerceClass(object):
                     access_count = cur.fetchone()
                     if access_count:
                         access_count = access_count[0]
-                    #conn.commit()
+                    # conn.commit()
                     cur.execute("COMMIT;")
                     # concatenation
                     if access_count:
@@ -219,59 +206,51 @@ class EcommerceClass(object):
                     print("New Staff Member: ")
                     staff_phone = input("Please enter phone number")
                     cur.execute(
-                        "INSERT INTO StaffMember (staffm_name,staffm_phone, cryptographic_password) VALUES('{}','{}','{}');".format(user_name, staff_phone,
-                                                                                                       encrypted_password))
+                        "INSERT INTO StaffMember (staffm_name,staffm_phone, cryptographic_password) VALUES('{}','{}','{}');".format(
+                            user_name, staff_phone,
+                            encrypted_password))
                     # commit to save the changes occurred in the table
-                    print("inserted")
-                    #conn.commit()
                     cur.execute("COMMIT;")
                     print("New staff Member created. To use features/functions, login again")
-
-
-
+                    cur.close()
+                    conn.close()
             except Exception as e:
-                # remove curser
-                cur.close()
-            cur.close()
+                print(e)
         except Exception as e:
-            # close the connection
-            conn.close()
+            print(e)
 
     def product_price(self):
-
         try:
             conn = create_connection(r"final_project_database.db")
-            print("Connection established")
+            cur = conn.cursor()
+            # print("Connection established")
             try:
-                cur = conn.cursor()
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
-                csv_path = r"productprice.csv"
                 if productprice_csv:
-                    with open(csv_path, 'w') as file:
+                    with open('productprice.csv', 'w+', newline='') as file:
                         writer = csv.writer(file)
-                        writer.writerow(['Product ID', 'Product Name', 'Unit Price'])
+                        writer.writerow(['Product_ID', 'Product_Name', 'Unit_Price'])
                         writer.writerows(productprice_csv)
-                        print("report generated")
+                        cur.close()
+                        conn.close()
+                        # print("report generated")
 
-                #df = pd.read_csv('productprice.csv.csv')
+                # df = pd.read_csv('productprice.csv')
 
-               # fig = px.line(df, x='Product Name', y='Unit Price', title='Apple Share Prices over time (2014)')
-                #fig.show()
+            # fig = px.line(df, x='Product Name', y='Unit Price', title='Apple Share Prices over time (2014)')
+            # fig.show()
             except Exception as e:
-                    # remove curser
-                    cur.close()
-            cur.close()
+                print(e)
         except Exception as e:
-                # close the connection
-                conn.close()
-
+            print(e)
 
     def create_product(self):
         try:
+            conn = create_connection(r"final_project_database.db")
+            cur = conn.cursor()
             prod_name = input("Enter product name:")
             prod_price = int(input("Enter product price:"))
-
             try:
                 if prod_name == "" or prod_price == "":
                     print("product_name OR price can not be empty")
@@ -279,18 +258,16 @@ class EcommerceClass(object):
                     if prod_price < 0:
                         print("product price can not be less than zero")
                     else:
-                        connection = create_connection(r"final_project_database.db")
-                        cursor = connection.cursor()
-
-                        cursor.execute(
+                        cur.execute(
                             "CREATE TABLE IF NOT EXISTS products (pid INTEGER NOT NULL UNIQUE, prod_name	TEXT NOT NULL,"
                             "unit_price	INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(pid AUTOINCREMENT));")
 
-                        cursor.execute("INSERT INTO products (prod_name, unit_price) VALUES (?, ?);", (prod_name, prod_price))
-                        cursor.execute("COMMIT;")
+                        cur.execute("INSERT INTO products (prod_name, unit_price) VALUES (?, ?);",
+                                       (prod_name, prod_price))
+                        cur.execute("COMMIT;")
                         print("Product has been created successfully...")
-                        cursor.close()
-                        connection.close()
+                        cur.close()
+                        conn.close()
                         return True
             except TypeError:
                 print("Entered data format incorrect")
@@ -303,6 +280,52 @@ class EcommerceClass(object):
         except Exception:
             print("Error came...2")
 
+    def show_products(self):
+        df = pd.read_csv(r'productprice.csv', sep=',')
+        print(df.to_string(index=False))
+
+    def add_to_cart(self):
+        print("Welcome to Cart")
+        ecom_obj.show_products()
+        try:
+            conn = create_connection(r"final_project_database.db")
+            cur = conn.cursor()
+            pid = input("enter pid:")
+            que_exi_prod = "SELECT prod_name, unit_price FROM products WHERE pid = '{}'".format(pid)
+
+            # executing the query
+            cur.execute(que_exi_prod)
+            que_exi_use_find = cur.fetchone()
+            prod_name = "SELECT prod_name FROM products WHERE pid = '{}'".format(pid)
+            prod_price = "SELECT unit_price FROM products WHERE pid = '{}'".format(pid)
+            # if there is any response, this 'if' part will run
+            cur.execute(prod_name)
+            prod_name_find = cur.fetchone()
+            cur.execute(prod_price)
+            prod_price_find = cur.fetchone()
+            if que_exi_use_find:
+                pname = prod_name_find[0]
+                pprice = int(prod_price_find[0])
+                print("Product is: ", pname)
+                print("Unit price is:", pprice)
+                qnt = int(input("Enter product quantity:"))
+                total_price = qnt * pprice
+                cur.execute(
+                    "CREATE TABLE IF NOT EXISTS cart (cartid INTEGER NOT NULL UNIQUE, prod_name	TEXT NOT NULL,"
+                    "unit_price	INTEGER NOT NULL DEFAULT 0, qnt	INTEGER NOT NULL DEFAULT 1, "
+                    "final_price INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cartid AUTOINCREMENT));")
+
+                cur.execute(
+                    "INSERT INTO cart (prod_name,unit_price, qnt, final_price) VALUES('{}','{}','{}','{}');".format(
+                        pname, pprice, qnt, total_price))
+                cur.execute("COMMIT;")
+                print("Product added into Cart")
+                cur.close()
+                conn.close()
+            else:
+                print("exit")
+        except Exception as e:
+            print(e)
 
 ecom_obj = EcommerceClass()
 user_choice = '1'
@@ -318,13 +341,14 @@ while user_choice != '0':
     user_choice = input("Enter your choice:")
     if user_choice == "1":
         print("=======================")
-        print('''Staff login. ⬇Select appropriate option from following options⬇⬇️
+        print('''Staff login. ⬇Select appropriate option from following options️
         1. Staff Login/sign up to access staff functions
         2. Back to main menu
         0. Exit ''')
         print("=======================")
         staff_choice = input("Enter staff choice: ")
         if staff_choice == "1":
+            ecom_obj.product_price()
             ecom_obj.stafflogin()
         elif user_choice == "2":
             print("Exit from staff ")
@@ -334,14 +358,29 @@ while user_choice != '0':
             break
     elif user_choice == "2":
         print("=======================")
-        print('''   Customer section. ⬇Select appropriate option from following options⬇⬇️"
+        print('''   Customer section. ⬇Select appropriate option from following options⬇
         1. Customer sign in/sign up 
         2. Back to main menu        
         0. Exit''')
         print("=======================")
         customer_choice = input(" Enter customer option: ")
         if customer_choice == "1":
+            ecom_obj.product_price()
             ecom_obj.custlogin()
+            # ecom_obj.show_products()
+            ecom_obj.add_to_cart()
+            # print("1. View All Products")
+            # print("2. Add to Cart")
+            # print("0. Back to menu")
+            # while customer_choice!='0':
+            #     if customer_choice == '1':
+            #         ecom_obj.show_products()
+            #         continue
+            #     elif customer_choice == '2':
+            #         ecom_obj.show_products()
+            #         break
+            #     else:
+            #         break
         elif customer_choice == "2":
             pass
         elif customer_choice == "0":
