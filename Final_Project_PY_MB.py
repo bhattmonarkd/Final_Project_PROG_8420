@@ -230,7 +230,7 @@ class EcommerceClass(object):
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
                 if productprice_csv:
-                    with open('productprice.csv', 'w+', newline='') as file:
+                    with open('productprice.csv', 'w', newline='') as file:
                         writer = csv.writer(file)
                         writer.writerow(['Product_ID', 'Product_Name', 'Unit_Price'])
                         writer.writerows(productprice_csv)
@@ -321,12 +321,14 @@ class EcommerceClass(object):
                 cur.execute(
                     "INSERT INTO cart (prod_name,unit_price, qnt, final_price) VALUES('{}','{}','{}','{}');".format(
                         pname, pprice, qnt, total_price))
-                cur.execute("COMMIT;")
                 print("Product added into Cart")
+                flush_table = "DELETE FROM cart;"
+                cur.execute(flush_table)
+                cur.execute("COMMIT;")
                 cur.close()
                 conn.close()
             else:
-                print("exit")
+                print("Product does not exist.")
         except Exception as e:
             print(e)
 
