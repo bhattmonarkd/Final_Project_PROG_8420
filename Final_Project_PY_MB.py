@@ -228,6 +228,7 @@ class EcommerceClass(object):
                     print("New staff Member created. To use features/functions, login again")
 
 
+
             except Exception as e:
                 # remove curser
                 cur.close()
