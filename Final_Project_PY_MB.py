@@ -41,8 +41,8 @@ def create_connection(db_file):
         print(er)
     finally:
         if conn:
-            conn.close()
             return conn
+            conn.close()
 
 
 if __name__ == '__main__':
@@ -56,6 +56,7 @@ class EcommerceClass(object):
 
     def custlogin(self):
         try:
+            ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             try:
@@ -134,6 +135,7 @@ class EcommerceClass(object):
 
     def stafflogin(self):
         try:
+            ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             try:
@@ -223,7 +225,7 @@ class EcommerceClass(object):
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
-            # print("Connection established")
+            print("Connection established")
             try:
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
@@ -232,8 +234,8 @@ class EcommerceClass(object):
                         writer = csv.writer(file)
                         writer.writerow(['Product_ID', 'Product_Name', 'Unit_Price'])
                         writer.writerows(productprice_csv)
-                        cur.close()
-                        conn.close()
+                cur.close()
+                conn.close()
                         # print("report generated")
 
                 # df = pd.read_csv('productprice.csv')
@@ -247,6 +249,7 @@ class EcommerceClass(object):
 
     def create_product(self):
         try:
+            ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             prod_name = input("Enter product name:")
@@ -348,7 +351,6 @@ while user_choice != '0':
         print("=======================")
         staff_choice = input("Enter staff choice: ")
         if staff_choice == "1":
-            ecom_obj.product_price()
             ecom_obj.stafflogin()
         elif user_choice == "2":
             print("Exit from staff ")
@@ -358,14 +360,13 @@ while user_choice != '0':
             break
     elif user_choice == "2":
         print("=======================")
-        print('''   Customer section. ⬇Select appropriate option from following options⬇
+        print('''   Customer section. Select appropriate option from following options
         1. Customer sign in/sign up 
         2. Back to main menu        
         0. Exit''')
         print("=======================")
         customer_choice = input(" Enter customer option: ")
         if customer_choice == "1":
-            ecom_obj.product_price()
             ecom_obj.custlogin()
             # ecom_obj.show_products()
             ecom_obj.add_to_cart()
