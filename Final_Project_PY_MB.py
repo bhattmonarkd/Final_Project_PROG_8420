@@ -14,7 +14,6 @@ import matplotlib.pyplot as plt
 
 # import plotly.express as px
 
-
 def cipher_conv(password):
     # key to convert user input
     original = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"
@@ -60,7 +59,7 @@ class EcommerceClass(object):
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             try:
-                create_cust_query = '''CREATE TABLE "customers" (cid INTEGER NOT NULL UNIQUE, cust_name TEXT NOT NULL,
+                create_cust_query = '''CREATE TABLE IF NOT EXISTS "customers" (cid INTEGER NOT NULL UNIQUE, cust_name TEXT NOT NULL,
                         cust_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cid AUTOINCREMENT));'''
                 conn.execute(create_cust_query)
                 # commit to save query result
@@ -100,8 +99,9 @@ class EcommerceClass(object):
                     # Let's see the rows in table customers
                     que_table = "SELECT * FROM customers"
                     cur.execute(que_table)
-                    # print("Updated Table")
-                    # print(cur.fetchall())
+                    cur.close()
+                    conn.close()
+                    ecom_obj.add_to_cart(cid)
 
                 # If User is new user then create user and register
                 else:
@@ -115,19 +115,8 @@ class EcommerceClass(object):
                     # commit to save the changes occurred in the table
                     print("New Customer created successfully.")
                     conn.commit()
-
-                # Exporting table customers into CSV file by fetching all the results we get from query
-                # make sure you have set the csv path
-                # cur.execute('SELECT * FROM customers;')
-                # customers_csv = cur.fetchall()
-                # if customers_csv:
-                #     with open(csv_path, 'w') as file:
-                #     writer = csv.writer(file)
-                # select columns names to write rows in that sequence
-                #     writer.writerow(['USER_ID', 'LOGIN', 'PASSWORD', 'access_count'])
-                # writer.writerows(customers_csv)
-                cur.close()
-                conn.close()
+                # cur.close()
+                # conn.close()
             except Exception as e:
                 print(e)
         except Exception as e:
@@ -135,15 +124,15 @@ class EcommerceClass(object):
 
     def stafflogin(self):
         try:
-            ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
+            ecom_obj.product_price()
             try:
-                que = '''CREATE TABLE "StaffMember" (smid INTEGER NOT NULL UNIQUE, staffm_name TEXT NOT NULL,
+                que = '''CREATE TABLE IF NOT EXISTS StaffMember (smid INTEGER NOT NULL UNIQUE, staffm_name TEXT NOT NULL,
                         staffm_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(smid AUTOINCREMENT));'''
                 conn.execute(que)
                 # commit to save query result
-                cur.execute("COMMIT;")
+                #cur.execute("COMMIT;")
                 # conn.commit()
             except Exception as e:
                 print("The", e)
@@ -185,9 +174,6 @@ class EcommerceClass(object):
                     # Let's see the rows in table customers
                     que_table = "SELECT * FROM StaffMember"
                     cur.execute(que_table)
-                    # print("Updated Table")
-                    # print(cur.fetchall())
-
                     print('''Select from available choices
                     1. Create product
                     2. Generate product-price info report
@@ -199,7 +185,7 @@ class EcommerceClass(object):
                     elif func_choice == "2":
                         ecom_obj.product_price()
                     elif func_choice == "0":
-                        print("Log out successful")
+                        print("Logged out successfully")
                         pass
 
                 # If User is new user then create user and register
@@ -225,7 +211,7 @@ class EcommerceClass(object):
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
-            print("Connection established")
+            #print("Connection established")
             try:
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
@@ -236,7 +222,7 @@ class EcommerceClass(object):
                         writer.writerows(productprice_csv)
                 cur.close()
                 conn.close()
-                        # print("report generated")
+                # print("report generated")
 
                 # df = pd.read_csv('productprice.csv')
 
@@ -249,7 +235,7 @@ class EcommerceClass(object):
 
     def create_product(self):
         try:
-            ecom_obj.product_price()
+            #ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             prod_name = input("Enter product name:")
@@ -266,7 +252,7 @@ class EcommerceClass(object):
                             "unit_price	INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(pid AUTOINCREMENT));")
 
                         cur.execute("INSERT INTO products (prod_name, unit_price) VALUES (?, ?);",
-                                       (prod_name, prod_price))
+                                    (prod_name, prod_price))
                         cur.execute("COMMIT;")
                         print("Product has been created successfully...")
                         cur.close()
@@ -287,7 +273,7 @@ class EcommerceClass(object):
         df = pd.read_csv(r'productprice.csv', sep=',')
         print(df.to_string(index=False))
 
-    def add_to_cart(self):
+    def add_to_cart(self, custid):
         print("Welcome to Cart")
         ecom_obj.show_products()
         try:
@@ -316,14 +302,15 @@ class EcommerceClass(object):
                 cur.execute(
                     "CREATE TABLE IF NOT EXISTS cart (cartid INTEGER NOT NULL UNIQUE, prod_name	TEXT NOT NULL,"
                     "unit_price	INTEGER NOT NULL DEFAULT 0, qnt	INTEGER NOT NULL DEFAULT 1, "
-                    "final_price INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cartid AUTOINCREMENT));")
+                    "final_price INTEGER NOT NULL DEFAULT 0, cid	INTEGER, PRIMARY KEY(cartid AUTOINCREMENT),"
+                    "FOREIGN KEY(cid) REFERENCES customers(cid));")
 
                 cur.execute(
-                    "INSERT INTO cart (prod_name,unit_price, qnt, final_price) VALUES('{}','{}','{}','{}');".format(
-                        pname, pprice, qnt, total_price))
+                    "INSERT INTO cart (prod_name,unit_price, qnt, final_price, cid) VALUES('{}','{}','{}','{}','{}');".format(
+                        pname, pprice, qnt, total_price, custid))
                 print("Product added into Cart")
-                flush_table = "DELETE FROM cart;"
-                cur.execute(flush_table)
+                # flush_table = "DELETE FROM cart;"
+                # cur.execute(flush_table)
                 cur.execute("COMMIT;")
                 cur.close()
                 conn.close()
@@ -331,6 +318,7 @@ class EcommerceClass(object):
                 print("Product does not exist.")
         except Exception as e:
             print(e)
+
 
 ecom_obj = EcommerceClass()
 user_choice = '1'
@@ -341,7 +329,7 @@ while user_choice != '0':
     1. Staff
     2. Customer ''')
     print("Type '0' to EXIT ")
-    print("================================================")
+    print("============================")
 
     user_choice = input("Enter your choice:")
     if user_choice == "1":
@@ -370,26 +358,11 @@ while user_choice != '0':
         customer_choice = input(" Enter customer option: ")
         if customer_choice == "1":
             ecom_obj.custlogin()
-            # ecom_obj.show_products()
-            ecom_obj.add_to_cart()
-            # print("1. View All Products")
-            # print("2. Add to Cart")
-            # print("0. Back to menu")
-            # while customer_choice!='0':
-            #     if customer_choice == '1':
-            #         ecom_obj.show_products()
-            #         continue
-            #     elif customer_choice == '2':
-            #         ecom_obj.show_products()
-            #         break
-            #     else:
-            #         break
         elif customer_choice == "2":
             pass
         elif customer_choice == "0":
             print("Thanks for using our site")
             break
-
     elif user_choice == "0":
         print("********************...Thanks...Good bye...Enjoy...******************")
         break
