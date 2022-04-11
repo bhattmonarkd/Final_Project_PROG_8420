@@ -10,6 +10,8 @@ from sqlite3 import Error
 import csv
 import pandas as pd
 import matplotlib.pyplot as plt
+
+
 # import plotly.express as px
 
 def cipher_conv(password):
@@ -57,7 +59,7 @@ class EcommerceClass(object):
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             try:
-                create_cust_query = '''CREATE TABLE "customers" (cid INTEGER NOT NULL UNIQUE, cust_name TEXT NOT NULL,
+                create_cust_query = '''CREATE TABLE IF NOT EXISTS "customers" (cid INTEGER NOT NULL UNIQUE, cust_name TEXT NOT NULL,
                         cust_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cid AUTOINCREMENT));'''
                 conn.execute(create_cust_query)
                 # commit to save query result
@@ -97,6 +99,9 @@ class EcommerceClass(object):
                     # Let's see the rows in table customers
                     que_table = "SELECT * FROM customers"
                     cur.execute(que_table)
+                    cur.close()
+                    conn.close()
+                    ecom_obj.add_to_cart(cid)
 
                 # If User is new user then create user and register
                 else:
@@ -110,8 +115,8 @@ class EcommerceClass(object):
                     # commit to save the changes occurred in the table
                     print("New Customer created successfully.")
                     conn.commit()
-                cur.close()
-                conn.close()
+                # cur.close()
+                # conn.close()
             except Exception as e:
                 print(e)
         except Exception as e:
@@ -119,15 +124,15 @@ class EcommerceClass(object):
 
     def stafflogin(self):
         try:
-            ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
+            ecom_obj.product_price()
             try:
-                que = '''CREATE TABLE "StaffMember" (smid INTEGER NOT NULL UNIQUE, staffm_name TEXT NOT NULL,
+                que = '''CREATE TABLE IF NOT EXISTS StaffMember (smid INTEGER NOT NULL UNIQUE, staffm_name TEXT NOT NULL,
                         staffm_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(smid AUTOINCREMENT));'''
                 conn.execute(que)
                 # commit to save query result
-                cur.execute("COMMIT;")
+                #cur.execute("COMMIT;")
                 # conn.commit()
             except Exception as e:
                 print("The", e)
@@ -206,7 +211,7 @@ class EcommerceClass(object):
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
-            print("Connection established")
+            #print("Connection established")
             try:
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
@@ -230,7 +235,7 @@ class EcommerceClass(object):
 
     def create_product(self):
         try:
-            ecom_obj.product_price()
+            #ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             prod_name = input("Enter product name:")
@@ -268,7 +273,7 @@ class EcommerceClass(object):
         df = pd.read_csv(r'productprice.csv', sep=',')
         print(df.to_string(index=False))
 
-    def add_to_cart(self):
+    def add_to_cart(self, custid):
         print("Welcome to Cart")
         ecom_obj.show_products()
         try:
@@ -297,14 +302,15 @@ class EcommerceClass(object):
                 cur.execute(
                     "CREATE TABLE IF NOT EXISTS cart (cartid INTEGER NOT NULL UNIQUE, prod_name	TEXT NOT NULL,"
                     "unit_price	INTEGER NOT NULL DEFAULT 0, qnt	INTEGER NOT NULL DEFAULT 1, "
-                    "final_price INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(cartid AUTOINCREMENT));")
+                    "final_price INTEGER NOT NULL DEFAULT 0, cid	INTEGER, PRIMARY KEY(cartid AUTOINCREMENT),"
+                    "FOREIGN KEY(cid) REFERENCES customers(cid));")
 
                 cur.execute(
-                    "INSERT INTO cart (prod_name,unit_price, qnt, final_price) VALUES('{}','{}','{}','{}');".format(
-                        pname, pprice, qnt, total_price))
+                    "INSERT INTO cart (prod_name,unit_price, qnt, final_price, cid) VALUES('{}','{}','{}','{}','{}');".format(
+                        pname, pprice, qnt, total_price, custid))
                 print("Product added into Cart")
-                #flush_table = "DELETE FROM cart;"
-                #cur.execute(flush_table)
+                # flush_table = "DELETE FROM cart;"
+                # cur.execute(flush_table)
                 cur.execute("COMMIT;")
                 cur.close()
                 conn.close()
@@ -352,7 +358,6 @@ while user_choice != '0':
         customer_choice = input(" Enter customer option: ")
         if customer_choice == "1":
             ecom_obj.custlogin()
-            ecom_obj.add_to_cart()
         elif customer_choice == "2":
             pass
         elif customer_choice == "0":
