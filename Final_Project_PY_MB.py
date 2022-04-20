@@ -127,8 +127,7 @@ class EcommerceClass(object):
                         staffm_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(smid AUTOINCREMENT));'''
                 conn.execute(que)
                 # commit to save query result
-                # cur.execute("COMMIT;")
-                # conn.commit()
+
             except Exception as e:
                 print("The", e)
                 pass
@@ -158,7 +157,7 @@ class EcommerceClass(object):
                     access_count = cur.fetchone()
                     if access_count:
                         access_count = access_count[0]
-                    # conn.commit()
+
                     cur.execute("COMMIT;")
                     # concatenation
                     if access_count:
@@ -205,7 +204,6 @@ class EcommerceClass(object):
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
-            # print("Connection established")
             try:
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
@@ -216,12 +214,7 @@ class EcommerceClass(object):
                         writer.writerows(productprice_csv)
                 cur.close()
                 conn.close()
-                # print("report generated")
 
-                # df = pd.read_csv('productprice.csv')
-
-            # fig = px.line(df, x='Product Name', y='Unit Price', title='Apple Share Prices over time (2014)')
-            # fig.show()
             except Exception as e:
                 print(e)
         except Exception as e:
@@ -229,7 +222,7 @@ class EcommerceClass(object):
 
     def create_product(self):
         try:
-            # ecom_obj.product_price()
+
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             prod_name = input("Enter product name:")
@@ -296,19 +289,17 @@ class EcommerceClass(object):
                 cur.execute(
                     "CREATE TABLE IF NOT EXISTS cart (cartid INTEGER NOT NULL UNIQUE,pid INTEGER, prod_name	TEXT NOT NULL,"
                     "unit_price	INTEGER NOT NULL DEFAULT 0, qnt	INTEGER NOT NULL DEFAULT 1, "
-                    "final_price INTEGER NOT NULL DEFAULT 0, cid	INTEGER, PRIMARY KEY(cartid AUTOINCREMENT),"
+                    "final_price INTEGER NOT NULL DEFAULT 0, cid	INTEGER ,PRIMARY KEY(cartid AUTOINCREMENT),"
                     "FOREIGN KEY(cid) REFERENCES customers(cid));")
-                cur.execute("COMMIT;")
+
                 cur.execute(
                     "INSERT INTO cart (pid, prod_name,unit_price, qnt, final_price, cid) VALUES('{}','{}','{}','{}','{}','{}');".format(
                         pid, pname, pprice, qnt, total_price, custid))
                 print("Product added into Cart")
-                # flush_table = "DELETE FROM cart;"
-                # cur.execute(flush_table)
                 cur.execute("COMMIT;")
 
                 cur.close()
-                conn.close()
+
             else:
                 print("Product does not exist.")
         except Exception as e:
@@ -336,7 +327,6 @@ class EcommerceClass(object):
                     cur.execute(
                         "select pid, prod_name, qnt, unit_price, final_price from cart where cid = '{}'".format(custid))
                     testcart = cur.fetchall()
-                    cur1.close()
                     cur1 = conn.cursor()
                     cur1.execute("select sum(final_price) from cart where cid = '{}'".format(custid))
                     finalprice = cur1.fetchone()
@@ -352,81 +342,63 @@ class EcommerceClass(object):
                         print(prodcart.to_string(index=False, justify='center'))
                         cur.close()
                         cur1.close()
-                        #conn.close()
-                        #continue
                     else:
+                        print("The cart is empty")
                         pass
 
                 except Exception as e:
                     print(e)
             if vchoice == '3':
-                print("p1")
-                #cur2.execute('''CREATE TABLE if not exists orders (oid INTEGER NOT NULL UNIQUE,cid INTEGER,order_datetime	TEXT NOT NULL '
-                #            "FOREIGN KEY(cid) REFERENCES customers(cid), PRIMARY KEY(oid AUTOINCREMENT)''')
-
-                #cur2.execute("commit;")
-                print("p2")
-
                 now = datetime.now()
-                current_time = now.strftime("%H:%M:%S")
-                print(current_time)
+                current_time = now.strftime("%d-%m-%y %H:%M:%S")
+
                 try:
-                    cur2.execute('''CREATE TABLE if not exists"orders" (	"oid"	INTEGER NOT NULL DEFAULT 0 UNIQUE,	"cid"	INTEGER,"order_datetime"	
-                    TEXT NOT NULL,	FOREIGN KEY("cid") REFERENCES "customers"("cid"),	PRIMARY KEY("oid"))''')
 
-                   # CREATE TABLE if not exists orders (oid INTEGER NOT NULL UNIQUE,cid INTEGER,order_datetime	TEXT NOT NULL
+                    oid = cur2.execute("select oid from cart where cid = '{}'".format(custid))
+                    oid = cur2.fetchone()
+                    pid = cur2.execute("select pid from cart where cid = '{}'".format(custid))
+                    pid = cur2.fetchone()
+                    prod_qty = cur2.execute("select qnt from cart where cid = '{}'".format(custid))
+                    prod_qty = cur2.fetchone()
+                    lineitem_total = cur2.execute("select final_price from cart where cid = '{}'".format(custid))
+                    lineitem_total = cur2.fetchone()
+
+                    cur2.execute('''CREATE TABLE IF NOT EXISTS "order_details" (	"odid"	INTEGER NOT NULL DEFAULT 0 UNIQUE,	"oid"	INTEGER NOT NULL,	"pid"	INTEGER NOT NULL,
+                    "prod_qty"	NUMERIC NOT NULL,	"lineitem_total"	NUMERIC NOT NULL,	"OrderDateTime"	INTEGER NOT NULL,	PRIMARY KEY("odid" AUTOINCREMENT)); ''')
 
 
-                    #cur2.execute("commit;")
+                    cur2.execute("insert into order_details( oid, pid,prod_qty ,lineitem_total,OrderDateTime) select distinct cart.oid , cart.pid, cart.qnt, cart.final_price, '{}' from cart WHERE cart.cid ='{}'".format(current_time, custid))
+                    cur2.execute("delete from cart where cid = '{}'".format(custid))
 
-                    cur2.execute("insert into orders (cid , order_datetime) VALUES('{}','{}');".format(custid, current_time))
-                    cur2.execute("commit")
+                    cur2.execute('commit;')
+                    print("Thanks for placing an order")
+
+                        #cur2.close()
                 except Exception as e:
                     print(e)
-                print("p3")
-                print("after")
-                oid = cur2.execute("select oid from orders where cid = '{}'".format(custid))
-                pid = cur2.execute("select pid from orders where cid = '{}'".format(custid))
-                prod_qty = cur2.execute("select qnt from orders where cid = '{}'".format(custid))
-                lineitem_total = cur2.execute("select final_price from orders where cid = '{}'".format(custid))
-                cur2.execute('''CREATE TABLE IF NOT EXISTS order_details (odid	INTEGER NOT NULL UNIQUE, oid	INTEGER NOT NULL,pid	INTEGER NOT NULL,
-                         prod_qty	NUMERIC NOT NULL, lineitem_total	NUMERIC NOT NULL, FOREIGN KEY("oid") REFERENCES "orders"("oid"), FOREIGN KEY("pid") REFERENCES "products"("pid"),
-                          CONSTRAINT "PK_order_detail_id" PRIMARY KEY("odid" AUTOINCREMENT)) ''')
-                cur2.execute(
-                           "INSERT INTO order_details (oid,pid, prod_qty, lineitem_total) VALUES('{}','{}','{}','{}');".format(
-                                oid, pid, prod_qty, lineitem_total))
-                print("Thanks for placing an order")
-                    #cur2.close()
 
             if vchoice == '2':
                 print("Welcome to Cart")
-                ecom_obj.show_products()
-                ecom_obj.add_prod_to_cart(custid)
-                print("Modified cart")
                 conn = create_connection(r"final_project_database.db")
-                cur = conn.cursor()
-                y = "select * from cart where cid = '{}'".format(custid)
-                cur.execute(y)
-                cart = cur.fetchall()
-                print(cart)
-                cur.close()
-                conn.close()
+
                 print('''Select from following option
-                    1. Confirm Cart
+                    1. Add to Cart
                     2. Remove all products from cart
                     0. exit
                     ''')
                 choice = '0'
                 choice = input("enter choice: ")
                 if choice == '1':
-                    print("")
+                    cur = conn.cursor()
+                    ecom_obj.show_products()
+                    ecom_obj.add_prod_to_cart(custid)
+                    cur.close()
                 elif choice == '2':
                     try:
                         flush_table = "DELETE FROM cart where cid = '{}'".format(custid)
                         conn.execute(flush_table)
                         conn.execute("COMMIT;")
-                        x = conn.execute("Select * from cart;")
-                        print(x)
+                        print("Your cart is now empty")
                     except Exception as e:
                         print(e)
                 elif choice == "0":
