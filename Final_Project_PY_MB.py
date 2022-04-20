@@ -1,18 +1,19 @@
-# Subject   : PROG-8420
-# Student_ID: 8758098, 8804665
-# Student   : Monark Bhatt, Utkarshkumar Patel
-
-
-# importing library
+import pandas as pd
 import sqlite3
 from datetime import datetime
 from sqlite3 import Error
 import csv
-import pandas as pd
-import matplotlib.pyplot as plt
+
+
+# import matplotlib.pyplot as plt
 
 
 # import plotly.express as px
+
+# Subject   : PROG-8420
+# Student_ID: 8715911 ,8758098, 8714965, 8804665
+# Student   : Deep Bhatt, Monark Bhatt, Helly Darji, Utkarshkumar Patel
+
 
 def cipher_conv(password):
     # key to convert user input
@@ -93,15 +94,9 @@ class EcommerceClass(object):
                     if access_count:
                         access_count = access_count[0]
                     conn.commit()
-                    # concatenation
-                    if access_count:
-                        print("User ID '" + user_name + "' has accessed " + str(access_count) + " times")
-                    # Let's see the rows in table customers
-                    que_table = "SELECT * FROM customers"
-                    cur.execute(que_table)
+                    ecom_obj.to_cart_options(cid)
                     cur.close()
                     conn.close()
-                    ecom_obj.add_to_cart(cid)
 
                 # If User is new user then create user and register
                 else:
@@ -118,7 +113,7 @@ class EcommerceClass(object):
                 # cur.close()
                 # conn.close()
             except Exception as e:
-                print(e)
+                print('')
         except Exception as e:
             print(e)
 
@@ -132,7 +127,7 @@ class EcommerceClass(object):
                         staffm_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(smid AUTOINCREMENT));'''
                 conn.execute(que)
                 # commit to save query result
-                #cur.execute("COMMIT;")
+                # cur.execute("COMMIT;")
                 # conn.commit()
             except Exception as e:
                 print("The", e)
@@ -170,7 +165,6 @@ class EcommerceClass(object):
                         now = datetime.now()
                         current_time = now.strftime("%H:%M:%S")
                         print("Current Time =", current_time)
-                        print("Staff Member ID '" + user_name + "' has accessed " + str(access_count) + " times")
                     # Let's see the rows in table customers
                     que_table = "SELECT * FROM StaffMember"
                     cur.execute(que_table)
@@ -211,7 +205,7 @@ class EcommerceClass(object):
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
-            #print("Connection established")
+            # print("Connection established")
             try:
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
@@ -235,7 +229,7 @@ class EcommerceClass(object):
 
     def create_product(self):
         try:
-            #ecom_obj.product_price()
+            # ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             prod_name = input("Enter product name:")
@@ -271,11 +265,11 @@ class EcommerceClass(object):
 
     def show_products(self):
         df = pd.read_csv(r'productprice.csv', sep=',')
-        print(df.to_string(index=False))
 
-    def add_to_cart(self, custid):
-        print("Welcome to Cart")
-        ecom_obj.show_products()
+        print(df.to_string(index=False))
+        return df
+
+    def add_prod_to_cart(self, custid):
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
@@ -300,24 +294,149 @@ class EcommerceClass(object):
                 qnt = int(input("Enter product quantity:"))
                 total_price = qnt * pprice
                 cur.execute(
-                    "CREATE TABLE IF NOT EXISTS cart (cartid INTEGER NOT NULL UNIQUE, prod_name	TEXT NOT NULL,"
+                    "CREATE TABLE IF NOT EXISTS cart (cartid INTEGER NOT NULL UNIQUE,pid INTEGER, prod_name	TEXT NOT NULL,"
                     "unit_price	INTEGER NOT NULL DEFAULT 0, qnt	INTEGER NOT NULL DEFAULT 1, "
                     "final_price INTEGER NOT NULL DEFAULT 0, cid	INTEGER, PRIMARY KEY(cartid AUTOINCREMENT),"
                     "FOREIGN KEY(cid) REFERENCES customers(cid));")
-
+                cur.execute("COMMIT;")
                 cur.execute(
-                    "INSERT INTO cart (prod_name,unit_price, qnt, final_price, cid) VALUES('{}','{}','{}','{}','{}');".format(
-                        pname, pprice, qnt, total_price, custid))
+                    "INSERT INTO cart (pid, prod_name,unit_price, qnt, final_price, cid) VALUES('{}','{}','{}','{}','{}','{}');".format(
+                        pid, pname, pprice, qnt, total_price, custid))
                 print("Product added into Cart")
                 # flush_table = "DELETE FROM cart;"
                 # cur.execute(flush_table)
                 cur.execute("COMMIT;")
+
                 cur.close()
                 conn.close()
             else:
                 print("Product does not exist.")
         except Exception as e:
-            print(e)
+            print("error", e)
+
+    def to_cart_options(self, custid):
+        conn = create_connection(r"final_project_database.db")
+        cur = conn.cursor()
+        cur1 = conn.cursor()
+        cur2 = conn.cursor()
+        vchoice = 0
+        while vchoice != '0':
+            print('''
+            1. View cart
+            2. Add product to existing cart
+            3. Place order
+            4. Go back to previous menu
+            0. Exit  
+                            ''')
+            vchoice = input("Enter choice: ")
+            if vchoice == '1':
+                try:
+
+                    cur = conn.cursor()
+                    cur.execute(
+                        "select pid, prod_name, qnt, unit_price, final_price from cart where cid = '{}'".format(custid))
+                    testcart = cur.fetchall()
+                    cur1.close()
+                    cur1 = conn.cursor()
+                    cur1.execute("select sum(final_price) from cart where cid = '{}'".format(custid))
+                    finalprice = cur1.fetchone()
+                    if testcart:
+                        with open('testcart.csv', 'w+') as file:
+                            writer = csv.writer(file)
+                            writer.writerow(['Product_Id', 'Product_Name', 'Quantity', 'Unit_Price', 'Line_Item_Total'])
+                            writer.writerows(testcart)
+                            writer.writerow([''])
+                            writer.writerow(['Grand_Total', finalprice[0]])
+
+                        prodcart = pd.read_csv('testcart.csv', sep=',').fillna(' ')
+                        print(prodcart.to_string(index=False, justify='center'))
+                        cur.close()
+                        cur1.close()
+                        #conn.close()
+                        #continue
+                    else:
+                        pass
+
+                except Exception as e:
+                    print(e)
+            if vchoice == '3':
+                print("p1")
+                #cur2.execute('''CREATE TABLE if not exists orders (oid INTEGER NOT NULL UNIQUE,cid INTEGER,order_datetime	TEXT NOT NULL '
+                #            "FOREIGN KEY(cid) REFERENCES customers(cid), PRIMARY KEY(oid AUTOINCREMENT)''')
+
+                #cur2.execute("commit;")
+                print("p2")
+
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
+                print(current_time)
+                try:
+                    cur2.execute('''CREATE TABLE if not exists"orders" (	"oid"	INTEGER NOT NULL DEFAULT 0 UNIQUE,	"cid"	INTEGER,"order_datetime"	
+                    TEXT NOT NULL,	FOREIGN KEY("cid") REFERENCES "customers"("cid"),	PRIMARY KEY("oid"))''')
+
+                   # CREATE TABLE if not exists orders (oid INTEGER NOT NULL UNIQUE,cid INTEGER,order_datetime	TEXT NOT NULL
+
+
+                    #cur2.execute("commit;")
+
+                    cur2.execute("insert into orders (cid , order_datetime) VALUES('{}','{}');".format(custid, current_time))
+                    cur2.execute("commit")
+                except Exception as e:
+                    print(e)
+                print("p3")
+                print("after")
+                oid = cur2.execute("select oid from orders where cid = '{}'".format(custid))
+                pid = cur2.execute("select pid from orders where cid = '{}'".format(custid))
+                prod_qty = cur2.execute("select qnt from orders where cid = '{}'".format(custid))
+                lineitem_total = cur2.execute("select final_price from orders where cid = '{}'".format(custid))
+                cur2.execute('''CREATE TABLE IF NOT EXISTS order_details (odid	INTEGER NOT NULL UNIQUE, oid	INTEGER NOT NULL,pid	INTEGER NOT NULL,
+                         prod_qty	NUMERIC NOT NULL, lineitem_total	NUMERIC NOT NULL, FOREIGN KEY("oid") REFERENCES "orders"("oid"), FOREIGN KEY("pid") REFERENCES "products"("pid"),
+                          CONSTRAINT "PK_order_detail_id" PRIMARY KEY("odid" AUTOINCREMENT)) ''')
+                cur2.execute(
+                           "INSERT INTO order_details (oid,pid, prod_qty, lineitem_total) VALUES('{}','{}','{}','{}');".format(
+                                oid, pid, prod_qty, lineitem_total))
+                print("Thanks for placing an order")
+                    #cur2.close()
+
+            if vchoice == '2':
+                print("Welcome to Cart")
+                ecom_obj.show_products()
+                ecom_obj.add_prod_to_cart(custid)
+                print("Modified cart")
+                conn = create_connection(r"final_project_database.db")
+                cur = conn.cursor()
+                y = "select * from cart where cid = '{}'".format(custid)
+                cur.execute(y)
+                cart = cur.fetchall()
+                print(cart)
+                cur.close()
+                conn.close()
+                print('''Select from following option
+                    1. Confirm Cart
+                    2. Remove all products from cart
+                    0. exit
+                    ''')
+                choice = '0'
+                choice = input("enter choice: ")
+                if choice == '1':
+                    print("")
+                elif choice == '2':
+                    try:
+                        flush_table = "DELETE FROM cart where cid = '{}'".format(custid)
+                        conn.execute(flush_table)
+                        conn.execute("COMMIT;")
+                        x = conn.execute("Select * from cart;")
+                        print(x)
+                    except Exception as e:
+                        print(e)
+                elif choice == "0":
+                    print("Thanks for using our site")
+                    exit()
+                else:
+                    print("Invalid option")
+            if vchoice == '0':
+                print('Thank You!!')
+                exit()
 
 
 ecom_obj = EcommerceClass()
@@ -333,36 +452,44 @@ while user_choice != '0':
 
     user_choice = input("Enter your choice:")
     if user_choice == "1":
-        print("=======================")
-        print('''Staff login. ⬇Select appropriate option from following options️
-        1. Staff Login/sign up to access staff functions
-        2. Back to main menu
-        0. Exit ''')
-        print("=======================")
-        staff_choice = input("Enter staff choice: ")
-        if staff_choice == "1":
-            ecom_obj.stafflogin()
-        elif user_choice == "2":
-            print("Exit from staff ")
-            pass
-        elif user_choice == "0":
-            print("Thanks for using our site")
-            break
+        staff_choice = 0
+        while staff_choice != '0':
+            print("=======================")
+            print('''Staff login. ⬇Select appropriate option from following options️
+            1. Staff Login/sign up to access staff functions
+            2. Back to main menu
+            0. Exit ''')
+            print("=======================")
+            staff_choice = input("Enter staff choice: ")
+            if staff_choice == "1":
+                ecom_obj.stafflogin()
+            elif staff_choice == "2":
+                print("Exit from staff ")
+                break
+            elif staff_choice == "0":
+                print("Thanks for using our site")
+                exit()
+            else:
+                print("\nInvalid option...Please enter a proper option...!!!")
     elif user_choice == "2":
-        print("=======================")
-        print('''   Customer section. Select appropriate option from following options
-        1. Customer sign in/sign up 
-        2. Back to main menu        
-        0. Exit''')
-        print("=======================")
-        customer_choice = input(" Enter customer option: ")
-        if customer_choice == "1":
-            ecom_obj.custlogin()
-        elif customer_choice == "2":
-            pass
-        elif customer_choice == "0":
-            print("Thanks for using our site")
-            break
+        customer_choice = 0
+        while customer_choice != '0':
+            print("=======================")
+            print('''   Customer section. Select appropriate option from following options
+            1. Customer sign in/sign up 
+            2. Back to main menu        
+            0. Exit''')
+            print("=======================")
+            customer_choice = input(" Enter customer option: ")
+            if customer_choice == "1":
+                ecom_obj.custlogin()
+            elif customer_choice == "2":
+                break
+            elif customer_choice == "0":
+                print("Thanks for using our site")
+                exit()
+            else:
+                print("\nInvalid option...Please enter a proper option...!!!")
     elif user_choice == "0":
         print("********************...Thanks...Good bye...Enjoy...******************")
         break
