@@ -1,18 +1,21 @@
-# Subject   : PROG-8420
-# Student_ID: 8758098, 8804665
-# Student   : Monark Bhatt, Utkarshkumar Patel
-
-
-# importing library
+import pandas as pd
 import sqlite3
 from datetime import datetime
 from sqlite3 import Error
 import csv
-import pandas as pd
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 # import plotly.express as px
+
+# Subject   : PROG-8420
+# Student_ID: 8715911 ,8758098, 8714965, 8804665
+# Student   : Deep Bhatt, Monark Bhatt, Helly Darji, Utkarshkumar Patel
+
+
+
+
+
 
 def cipher_conv(password):
     # key to convert user input
@@ -132,7 +135,7 @@ class EcommerceClass(object):
                         staffm_phone	NUMERIC NOT NULL UNIQUE, cryptographic_password TEXT, "access_count" INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(smid AUTOINCREMENT));'''
                 conn.execute(que)
                 # commit to save query result
-                #cur.execute("COMMIT;")
+                # cur.execute("COMMIT;")
                 # conn.commit()
             except Exception as e:
                 print("The", e)
@@ -211,7 +214,7 @@ class EcommerceClass(object):
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
-            #print("Connection established")
+            # print("Connection established")
             try:
                 cur.execute('SELECT * FROM products;')
                 productprice_csv = cur.fetchall()
@@ -235,7 +238,7 @@ class EcommerceClass(object):
 
     def create_product(self):
         try:
-            #ecom_obj.product_price()
+            # ecom_obj.product_price()
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
             prod_name = input("Enter product name:")
@@ -271,11 +274,14 @@ class EcommerceClass(object):
 
     def show_products(self):
         df = pd.read_csv(r'productprice.csv', sep=',')
+
         print(df.to_string(index=False))
+        return df
 
     def add_to_cart(self, custid):
         print("Welcome to Cart")
-        ecom_obj.show_products()
+        result = ecom_obj.show_products()
+        print("here")
         try:
             conn = create_connection(r"final_project_database.db")
             cur = conn.cursor()
@@ -317,7 +323,7 @@ class EcommerceClass(object):
             else:
                 print("Product does not exist.")
         except Exception as e:
-            print(e)
+            print("error", e)
 
 
 ecom_obj = EcommerceClass()
