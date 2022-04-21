@@ -3,6 +3,12 @@ import sqlite3
 from datetime import datetime
 from sqlite3 import Error
 import csv
+from pandas import read_csv as xr
+import matplotlib as plt
+import math
+from openpyxl import Workbook
+from PIL import Image
+import xlwings as xw
 
 
 # import matplotlib.pyplot as plt
@@ -13,6 +19,7 @@ import csv
 # Subject   : PROG-8420
 # Student_ID: 8715911 ,8758098, 8714965, 8804665
 # Student   : Deep Bhatt, Monark Bhatt, Helly Darji, Utkarshkumar Patel
+from pandas import ExcelWriter
 
 
 def cipher_conv(password):
@@ -170,6 +177,7 @@ class EcommerceClass(object):
                     print('''Select from available choices
                     1. Create product
                     2. Generate product-price info report
+                    3. Popular product price report
                     0. Log out and back to main menu''')
                     func_choice = input("Enter choice: ")
                     if func_choice == "1":
@@ -177,6 +185,10 @@ class EcommerceClass(object):
                         ecom_obj.create_product()
                     elif func_choice == "2":
                         ecom_obj.product_price()
+                    elif func_choice == "3":
+                        ecom_obj.Popular_product_price_Report()
+                    elif staff_choice == "4":
+                        print("")
                     elif func_choice == "0":
                         print("Logged out successfully")
                         pass
@@ -305,6 +317,60 @@ class EcommerceClass(object):
         except Exception as e:
             print("error", e)
 
+    def Popular_product_price_Report(self):
+        try:
+            conn = create_connection(r"final_project_database.db")
+            cur = conn.cursor()
+            # print("Connection established")
+            try:
+                cur.execute('SELECT odid, lineitem_total FROM order_details ORDER BY lineitem_total DESC;')
+                report_csv = cur.fetchall()
+                if report_csv:
+                    with open('report.csv', 'w', newline='') as file:
+                        writer = csv.writer(file)
+                        writer.writerow(['odid', 'lineitem_total'])
+                        writer.writerows(report_csv)
+                cur.close()
+                conn.close()
+
+            except Exception as e:
+                print(e)
+        except Exception as e:
+            print(e)
+
+    def Popular_product_graph_report(self):
+        conn = create_connection(r"final_project_database.db")
+        cur = conn.cursor()
+        #ecom_obj.Popular_product_price_Report()
+        cur.execute('SELECT odid, lineitem_total FROM order_details ORDER BY lineitem_total DESC;')
+        report_csv = cur.fetchall()
+        if not report_csv:
+            print("empty file")
+            pass
+        else:
+            wb = pd.read_csv("report.csv")
+            sht = wb.sheets[0]
+            sht.name = "Popularity Report"
+            df = pd.read_csv("report.csv")
+            df
+
+            fig = plt.figure()
+            x = df["odid"]
+            y = df["lineitem_total"]
+            plt.bar(x, y)
+
+            sht.pictures.add(
+                fig,
+                name="Popularity Report",
+                update=True,
+                left=sht.range("D1").left,
+                top=sht.range("D1").top,
+                height=200,
+                width=300,
+            )
+            wb.save()
+            wb.close()
+
     def to_cart_options(self, custid):
         conn = create_connection(r"final_project_database.db")
         cur = conn.cursor()
@@ -422,6 +488,7 @@ while user_choice != '0':
             staff_choice = input("Enter staff choice: ")
             if staff_choice == "1":
                 ecom_obj.stafflogin()
+
             elif staff_choice == "2":
                 print("Exit from staff ")
                 break
