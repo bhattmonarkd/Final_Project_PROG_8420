@@ -352,15 +352,6 @@ class EcommerceClass(object):
                 now = datetime.now()
                 current_time = now.strftime("%d-%m-%y %H:%M:%S")
                 try:
-                    oid = cur2.execute("select oid from cart where cid = '{}'".format(custid))
-                    oid = cur2.fetchone()
-                    pid = cur2.execute("select pid from cart where cid = '{}'".format(custid))
-                    pid = cur2.fetchone()
-                    prod_qty = cur2.execute("select qnt from cart where cid = '{}'".format(custid))
-                    prod_qty = cur2.fetchone()
-                    lineitem_total = cur2.execute("select final_price from cart where cid = '{}'".format(custid))
-                    lineitem_total = cur2.fetchone()
-
                     cur2.execute('''CREATE TABLE IF NOT EXISTS "order_details" (	"odid"	INTEGER NOT NULL DEFAULT 0 UNIQUE,	"oid"	INTEGER NOT NULL,	"pid"	INTEGER NOT NULL,
                     "prod_qty"	NUMERIC NOT NULL,	"lineitem_total"	NUMERIC NOT NULL,	"OrderDateTime"	INTEGER NOT NULL,	PRIMARY KEY("odid" AUTOINCREMENT)); ''')
 
