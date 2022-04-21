@@ -351,9 +351,7 @@ class EcommerceClass(object):
             if vchoice == '3':
                 now = datetime.now()
                 current_time = now.strftime("%d-%m-%y %H:%M:%S")
-
                 try:
-
                     oid = cur2.execute("select oid from cart where cid = '{}'".format(custid))
                     oid = cur2.fetchone()
                     pid = cur2.execute("select pid from cart where cid = '{}'".format(custid))
@@ -372,8 +370,6 @@ class EcommerceClass(object):
 
                     cur2.execute('commit;')
                     print("Thanks for placing an order")
-
-                        #cur2.close()
                 except Exception as e:
                     print(e)
 
